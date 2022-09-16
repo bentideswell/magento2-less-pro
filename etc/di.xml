@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <virtualType name="AssetPreProcessorPool">
+        <arguments>
+            <argument name="preprocessors" xsi:type="array">
+                <item name="less" xsi:type="array">
+                    <item name="undefined_variables" xsi:type="array">
+                        <item name="class" xsi:type="string">FishPig\LessPro\Framework\Css\PreProcessor\UndefinedVariableInjector</item>
+                    </item>
+                </item>
+            </argument>
+        </arguments>
+    </virtualType>
+</config>
