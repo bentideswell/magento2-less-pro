@@ -4,9 +4,13 @@
         <arguments>
             <argument name="preprocessors" xsi:type="array">
                 <item name="less" xsi:type="array">
-                    <item name="undefined_variables" xsi:type="array">
-                        <item name="class" xsi:type="string">FishPig\LessPro\Framework\Css\PreProcessor\UndefinedVariableInjector</item>
+                    <item name="less_pro" xsi:type="array">
+                        <item name="class" xsi:type="string">FishPig\LessPro\Framework\Css\PreProcessor\LessProProcessor</item>
                     </item>
+                    <!--<item name="undefined_variables" xsi:type="array">
+                        <item name="after" xsi:type="string">inject_rules</item>
+                        <item name="class" xsi:type="string">FishPig\LessPro\Framework\Css\PreProcessor\UndefinedVariableInjector</item>
+                    </item>-->
                 </item>
             </argument>
         </arguments>
