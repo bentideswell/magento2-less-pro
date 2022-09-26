@@ -16,9 +16,11 @@ class RuleProvider implements \Magento\Framework\View\Asset\PreProcessorInterfac
      */
     private $propertyMap = [
         'background' => [
+            'background',
             'background-(color|image|position|repeat|size|width)'
         ],
         'border' => [
+            'border',
             'border-(top|right|bottom|left)',
         ],
         'flex-container' => [
@@ -31,20 +33,49 @@ class RuleProvider implements \Magento\Framework\View\Asset\PreProcessorInterfac
             'flex-(shrink|grow)'
         ],
         'font' => [
+            'font',
             'font-(family|size|weight)',
             'line-height'
         ],
         'margin' => [
+            'margin',
             'margin-(top|right|bottom|left)'
         ],
         'padding' => [
+            'padding',
             'padding-(top|right|bottom|left)'
         ],
         'position' => [
+            'position',
             'top',
             'right',
             'bottom',
             'left'
+        ]
+    ];
+
+    /**
+     *
+     */
+    private $propertyGroups = [
+        'a' => [
+            'color',
+            'display',
+            'font',
+            'margin',
+            'opacity',
+            'padding',
+            'text-decoration',
+            'transition'
+        ],
+        'a-hover' => [
+            'a'
+        ],
+        'h' => [
+            'color',
+            'font',
+            'margin',
+            'padding',
         ]
     ];
 
@@ -170,11 +201,12 @@ class RuleProvider implements \Magento\Framework\View\Asset\PreProcessorInterfac
         }
 
         foreach ($props as $prop) {
-            $mapped[] = $prop;
             if (isset($this->propertyMap[$prop])) {
                 if (is_array($this->propertyMap[$prop])) {
                     $mapped = array_merge($mapped, $this->propertyMap[$prop]);
                 }
+            } else {
+                $mapped[] = $prop;
             }
         }
 
@@ -192,7 +224,6 @@ class RuleProvider implements \Magento\Framework\View\Asset\PreProcessorInterfac
             if (is_array($values)) {
                 foreach ($values as $it => $value) {
                     if (strpos($value, '(') !== false) {
-                        //\(([^\)]+)\)(.*)$
                         if (!preg_match('/^(.*)\(([^\)]+)\)(.*)$/', $value, $match)) {
                             throw new \InvalidArgumentException(
                                 sprintf(
@@ -224,6 +255,18 @@ class RuleProvider implements \Magento\Framework\View\Asset\PreProcessorInterfac
                 }
 
                 $propertyMap[$key] = $updated;
+            }
+        }
+
+        // Add in rules based on property groups (eg. a tag);
+        foreach ($this->propertyGroups as $group => $props) {
+            $propertyMap[$group] = [];
+            foreach ($props as $prop) {
+                if (isset($propertyMap[$prop])) {
+                    $propertyMap[$group] = array_merge($propertyMap[$group], $propertyMap[$prop]);
+                } else {
+                    $propertyMap[$group][] = $prop;
+                }
             }
         }
 

@@ -28,6 +28,7 @@ class VariableNameProvider implements \Magento\Framework\View\Asset\PreProcessor
         '@import',
         '@magento_import',
         '@media-common',
+        '@media-target',
         '@extremum',
         '@break',
         '@screen__xs',
