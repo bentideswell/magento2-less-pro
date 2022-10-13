@@ -6,19 +6,15 @@ declare(strict_types=1);
 
 namespace FishPig\LessPro\Framework\Css\PreProcessor;
 
-use Magento\Framework\View\Asset\PreProcessor\Chain;
-
 class LessProProcessor implements \Magento\Framework\View\Asset\PreProcessorInterface
 {
     /**
      *
      */
     public function __construct(
-        \FishPig\LessPro\Framework\Css\PreProcessor\LessPro\VariableNameProvider $variableNameProvider,
-        \FishPig\LessPro\Framework\Css\PreProcessor\LessPro\RuleProvider $ruleProvider
+        \FishPig\LessPro\Framework\View\Design\Theme\Less\TemplateRenderer $lessTemplateRenderer
     ) {
-        $this->variableNameProvider = $variableNameProvider;
-        $this->ruleProvider = $ruleProvider;
+        $this->lessTemplateRenderer = $lessTemplateRenderer;
     }
 
     /**
@@ -30,7 +26,15 @@ class LessProProcessor implements \Magento\Framework\View\Asset\PreProcessorInte
             return;
         }
 
-        $this->variableNameProvider->process($chain);
-        $this->ruleProvider->process($chain);
+        $context = $chain->getAsset()->getContext();
+
+        $renderedTemplate = $this->lessTemplateRenderer->render(
+            $chain->getContent(),
+            $context->getAreaCode() . '/' . $context->getThemePath()
+        );
+
+        if ($renderedTemplate !== null) {
+            $chain->setContent($renderedTemplate);
+        }
     }
 }

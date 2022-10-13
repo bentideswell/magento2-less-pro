@@ -4,44 +4,65 @@
  */
 namespace FishPig\LessPro\Framework\View\Design\Theme;
 
-class FileCollector
+use Magento\Framework\Component\ComponentRegistrar;
+use Magento\Framework\Component\ComponentRegistrarInterface;
+use Magento\Framework\View\Design\ThemeInterface;
+
+class FileCollector implements \Magento\Framework\View\File\CollectorInterface
 {
     /**
      *
      */
-    private $files = [];
-
-    /**
-     *
-     */
     public function __construct(
-        \FishPig\LessPro\Framework\View\Design\Theme\PathProvider $themePathProvider
+        \Magento\Framework\View\Design\Theme\ThemeProviderInterface $themeProvider,
+        \Magento\Framework\View\File\Factory $fileFactory,
+        ComponentRegistrarInterface $componentRegistrar
     ) {
-        $this->themePathProvider = $themePathProvider;
+        $this->themeProvider = $themeProvider;
+        $this->fileFactory = $fileFactory;
+        $this->componentRegistrar = $componentRegistrar;
     }
 
     /**
      *
      */
-    public function getAll(\Magento\Framework\View\Asset\File $asset): array
+    public function getFiles(ThemeInterface $theme, $filePath)
     {
         $files = [];
-        foreach ($this->themePathProvider->getAll($asset) as $path) {
-            if (!isset($this->files[$path])) {
-                $this->files[$path] = [];
+        foreach ($theme->getInheritedThemes() as $themeBuffer) {
+            $fullThemePath = $this->componentRegistrar->getPath(
+                ComponentRegistrar::THEME,
+                $themeBuffer->getFullPath()
+            );
 
-                foreach(new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(BP . '/' . $path)) as $file) {
-                    if (strpos($file->getPathname(), '/.git/') === false && preg_match('/\.less$/', $file->getFilename())) {
-                        if ($content = trim(file_get_contents($file->getPathname()))) {
-                            $this->files[$path][$file->getPathname()] = $content;
-                        }
-                    }
+            $fileIterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($fullThemePath)
+            );
+
+            foreach($fileIterator as $file) {
+                if (strpos($file->getPathname(), '/.git/') !== false) {
+                    continue;
+                }
+
+                if (!$filePath || $filePath === $file->getExtension())  {
+                    $files[] = $this->fileFactory->create(
+                        $file->getPathname(),
+                        null,
+                        $theme
+                    );
                 }
             }
-
-            $files = array_merge($files, $this->files[$path]);
         }
 
         return $files;
+    }
+
+    /**
+     *
+     */
+    public function getFilesByThemePath($themePath, string $filePath): array
+    {
+        $theme = is_object($themePath) ? $theme : $this->themeProvider->getThemeByFullPath($themePath);
+        return $theme->getFullPath() ? $this->getFiles($theme, $filePath) : [];
     }
 }
