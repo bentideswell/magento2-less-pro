@@ -1,7 +1,7 @@
 {
     "name": "fishpig/magento2-less-pro",
     "description": "Add extra features to Magento 2's PHP Less implementation.",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "type": "magento2-module",
     "autoload": {
         "files": [

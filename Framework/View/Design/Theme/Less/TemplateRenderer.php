@@ -16,16 +16,10 @@ class TemplateRenderer
      */
     public function __construct(
         \FishPig\LessPro\Framework\View\Design\Theme\Less\VariableProvider $lessVariableProvider,
-        array $mediaQueryPrefixes = [
-            'maxXS',
-            'maxS',
-            'maxM',
-            'minM',
-            'minL'
-        ]
+        \FishPig\LessPro\Framework\View\Design\Theme\Less\MediaQueryPrefixProvider $mediaQueryPrefixProvider
     ) {
         $this->lessVariableProvider = $lessVariableProvider;
-        $this->mediaQueryPrefixes = $mediaQueryPrefixes;
+        $this->mediaQueryPrefixProvider = $mediaQueryPrefixProvider;
     }
 
     /**
@@ -36,6 +30,10 @@ class TemplateRenderer
         if (strpos($content, self::VARIABLE_NAME) === false) {
             return null;
         }
+
+        // Expand any variables in the format:
+        // //@spacing(some-variable, 20px)
+        $content = $this->lessVariableProvider->expandVariables($content);
 
         $extractedVariables = [];
         // First lets extract any variable defaults and move to the top
@@ -51,7 +49,6 @@ class TemplateRenderer
         $buffer = $content;
         // Infinite loop protection
         $safety = 10;
-
         // Extract and render template tags
         while (--$safety > 0 && preg_match($pattern, $buffer, $matches)) {
             // Remove all content before the start tag
@@ -103,9 +100,10 @@ class TemplateRenderer
         // This stores each individual template for each media query
         $renderedTemplates = [];
 
+        $mediaQueryPrefixes = $this->mediaQueryPrefixProvider->getAll();
         // Loop through each media query (including common) and try to generate template
         // Only generate template if variables are used in that scope
-        foreach (array_merge(['common'], $this->mediaQueryPrefixes) as $mediaQuery) {
+        foreach (array_merge(['common'], $mediaQueryPrefixes) as $mediaQuery) {
             // Copy the template so we can use the original again
             $scopedTemplate = $template;
             // This keeps track of if variables are set in this scope
@@ -129,10 +127,6 @@ class TemplateRenderer
                 // Reset replace value from previous loop
                 $replace = '';
                 if ($usedVariables) {
-
-                    echo $mediaQuery . PHP_EOL;
-                    print_r($usedVariables);
-
                     $scopeHasVariables = true;
                     if (count($usedVariables) > 1) {
                         // Ensure CSS rules are in alphabetical order
@@ -142,7 +136,6 @@ class TemplateRenderer
                     foreach ($usedVariables as $variable) {
                         $replace[] = $this->lessVariableProvider->getCssRule($variable);
                     }
-                    print_r($replace);
                     $replace  = implode("\n" . ($indents[$variablePrefix] ?? ''), $replace);
                 }
 

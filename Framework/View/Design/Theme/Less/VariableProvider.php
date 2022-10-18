@@ -36,9 +36,11 @@ class VariableProvider
      *
      */
     public function __construct(
-        \FishPig\LessPro\Framework\View\Design\Theme\FileCollector $fileCollector
+        \FishPig\LessPro\Framework\View\Design\Theme\FileCollector $fileCollector,
+        \FishPig\LessPro\Framework\View\Design\Theme\Less\MediaQueryPrefixProvider $mediaQueryPrefixProvider
     ) {
         $this->fileCollector = $fileCollector;
+        $this->mediaQueryPrefixProvider = $mediaQueryPrefixProvider;
     }
 
     /**
@@ -75,8 +77,9 @@ class VariableProvider
      */
     public function get(string $content, $delimiter = ':'): array
     {
-        if (preg_match_all('/(@[a-zA-Z0-9_\-]+)' . preg_quote($delimiter, '/') . '/', $content, $matches)) {
+        $content = $this->expandVariables($content);
 
+        if (preg_match_all('/(@[a-zA-Z0-9_\-]+)' . preg_quote($delimiter, '/') . '/', $content, $matches)) {
             return array_diff($matches[1], $this->ignoreList);
         }
 
@@ -107,7 +110,6 @@ class VariableProvider
 
         list($prefix, $property) = explode('__', $commonVariable);
 
-
         return sprintf('.lib-css(%s, %s);', $property, $variable);
     }
 
@@ -121,7 +123,8 @@ class VariableProvider
                 '@products-grid__display' => '.lib-css(display, @products-grid__display);',
                 '@products-grid__text-align' => '.lib-css(text-align, @products-grid__text-align);',
                 '@products-grid--hover__text-decoration' => '.lib-css(text-decoration, @products-grid--hover__text-decoration);',
-                '@_minM_products-grid__color' => '.lib-css(color, @_minM_products-grid__color);'
+                '@_minM_products-grid__color' => '.lib-css(color, @_minM_products-grid__color);',
+                '@_minM_nav-li0--hover-ul0__display' => '.lib-css(display, @_minM_nav-li0--hover-ul0__display);'
             ];
         }
 
@@ -137,5 +140,50 @@ class VariableProvider
                 );
             }
         }
+    }
+
+    /**
+     *
+     */
+    public function expandVariables(string $content): string
+    {
+        if (strpos($content, '@spacing') === false) {
+            return $content;
+        }
+
+        if (preg_match_all('/\/\/@spacing\(([^\)]+)\)/', $content, $matches)) {
+            foreach ($matches[0] as $it => $instruction) {
+                $variableName = ltrim($matches[1][$it], '@ ');
+                $defaultValue = null;
+
+                if (($pos = strpos($variableName, ',')) !== false) {
+                    $defaultValue = trim(substr($variableName, $pos+1));
+                    $variableName = substr($variableName, 0, $pos);
+                }
+
+                $newVariables = [];
+
+                if ($defaultValue !== null) {
+                    $newVariables[] = sprintf(
+                        '@%s: %s;',
+                        $variableName,
+                        $defaultValue
+                    );
+                }
+
+                foreach ($this->mediaQueryPrefixProvider->getAll() as $mediaPrefix) {
+                    $newVariables[] = sprintf(
+                        '@_%s_%s: @_%s_spacing;',
+                        $mediaPrefix,
+                        $variableName,
+                        $mediaPrefix
+                    );
+                }
+
+                $content = str_replace($instruction, implode("\n", $newVariables) . "\n", $content);
+            }
+        }
+
+        return $content;
     }
 }

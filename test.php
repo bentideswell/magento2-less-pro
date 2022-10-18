@@ -15,16 +15,9 @@ $templateRenderer = $objectManager->get(\FishPig\LessPro\Framework\View\Design\T
 
 $variableProvider->testCssRuleGeneration();
 
-
-
-
 echo $templateRenderer->render(
     file_get_contents(
-        BP . '/app/design/frontend/FishPig/blank/web/css/source/_frame.less'
+        BP . '/app/design/frontend/FishPig/blank/web/css/source/_blocks.less'
     ),
     'frontend/FishPig/default'
 );
-
-
-
-//print_r($variableNameProvider->getAll('frontend/FishPig/default'));
