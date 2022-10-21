@@ -4,6 +4,8 @@
  */
 namespace FishPig\LessPro\Framework\View\Design\Theme\Less;
 
+use Magento\Framework\View\Design\ThemeInterface;
+
 class VariableProvider
 {
     /**
@@ -36,32 +38,27 @@ class VariableProvider
      *
      */
     public function __construct(
-        \FishPig\LessPro\Framework\View\Design\Theme\FileCollector $fileCollector,
+        \FishPig\LessPro\Framework\View\Design\Theme\Less\FileCollector $fileCollector,
         \FishPig\LessPro\Framework\View\Design\Theme\Less\MediaQueryPrefixProvider $mediaQueryPrefixProvider
     ) {
         $this->fileCollector = $fileCollector;
         $this->mediaQueryPrefixProvider = $mediaQueryPrefixProvider;
     }
 
-    /**
-     *
-     */
-    public function getByTheme(\Magento\Framework\View\Design\ThemeInterface $theme): array
+    public function getThemeVariables($theme)
     {
-        return $this->getByThemePath($theme->getFullPath());
-    }
-
-    /**
-     *
-     */
-    public function getByThemePath(string $theme): array
-    {
-        $themeFiles = $this->fileCollector->getFilesByThemePath($theme, 'less');
         $variables = [];
-        foreach ($themeFiles as $file) {
-            $variables = array_merge($variables, $this->getByFilename($file->getFileName()));
+
+        foreach ($this->fileCollector->getFilesByTheme($theme) as $file) {
+            $variables = array_merge(
+                $variables,
+                $this->getByFilename($file->getFileName())
+            );
         }
-        return $variables;
+
+        return array_values(
+            array_unique($variables)
+        );
     }
 
     /**

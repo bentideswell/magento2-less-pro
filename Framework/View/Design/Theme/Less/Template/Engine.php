@@ -2,15 +2,10 @@
 /**
  *
  */
-namespace FishPig\LessPro\Framework\View\Design\Theme\Less;
+namespace FishPig\LessPro\Framework\View\Design\Theme\Less\Template;
 
-class TemplateRenderer
+class Engine
 {
-    /**
-     *
-     */
-    const VARIABLE_NAME = '@_fishpig-template';
-
     /**
      *
      */
@@ -25,66 +20,50 @@ class TemplateRenderer
     /**
      *
      */
-    public function render(string $content, string $theme): ?string
+    public function renderFile(\Magento\Framework\View\File $file, array $variables = []): string
     {
-        if (strpos($content, self::VARIABLE_NAME) === false) {
-            return null;
+        if (!is_file($file->getFilename())) {
+            throw new \InvalidArgumentException(
+                sprintf(
+                    'File "%s" does not exist.',
+                    $file->getFilename()
+                )
+            );
         }
 
+        return $this->render(file_get_contents($file->getFilename()), $variables);
+    }
+
+    /**
+     *
+     */
+    public function render(string $content, array $variables = []): string
+    {
         // Expand any variables in the format:
         // //@spacing(some-variable, 20px)
         $content = $this->lessVariableProvider->expandVariables($content);
 
         $extractedVariables = [];
         // First lets extract any variable defaults and move to the top
+        // This stops them from being repeated in each media query scope
         foreach ($this->lessVariableProvider->get($content) as $variable) {
             if (preg_match('/' . $variable . ':.*;/U', $content, $match)) {
                 $content = str_replace($match[0], '', $content);
-                $extractedVariables[] = $match[0];
+                $extractedVariables[$variable] = $match[0];
             }
         }
 
-        // This is the pattern to match the opening tag of a template
-        $pattern = $this->getTemplateStartRegex();
-        $buffer = $content;
-        // Infinite loop protection
-        $safety = 10;
-        // Extract and render template tags
-        while (--$safety > 0 && preg_match($pattern, $buffer, $matches)) {
-            // Remove all content before the start tag
-            $buffer = substr($buffer, strpos($buffer, $matches[0]));
+        // Now render the template
+        $content = $this->renderTemplate($content, array_merge($variables, array_keys($extractedVariables)));
 
-            // Try to get the template from the current position
-            // Move through brackets until level gets back to 0
-            if (false === ($template = $this->getTemplateTag($buffer))) {
-                throw new \Exception('Invalid syntax in LESS file.');
-            }
-
-            $buffer = str_replace($template, '', $buffer);
-
-            $content = str_replace(
-                $template,
-                $this->renderTemplate(
-                    $template,
-                    $this->lessVariableProvider->getByThemePath($theme)
-                ),
-                $content
-            );
-        }
-
-        return "//\n//\n//\n" . implode("\n", $extractedVariables) . "\n\n" . $content;
+        return "//\n//\n//\n" . implode("\n", $extractedVariables) . "\n\n" . $content . "\n";
     }
 
     /**
      *
      */
-    private function renderTemplate(string $template, array $userDefinedVariables)
+    private function renderTemplate(string $template, array $variables)
     {
-        // Strip opening tag
-        $template = preg_replace($this->getTemplateStartRegex(), '', $template);
-        // Strip closing bracket
-        $template = preg_replace('/\}$/', '', rtrim($template));
-
         // Variable prefixes used in template
         $variablePrefixesInTemplate = $this->lessVariableProvider->get($template, "\n", '//');
 
@@ -118,7 +97,7 @@ class TemplateRenderer
                 }
 
                 $usedVariables = array_filter(
-                    $userDefinedVariables,
+                    $variables,
                     function ($variable) use ($targetPrefix) {
                         return strpos($variable, $targetPrefix . '__') === 0;
                     }
@@ -134,8 +113,15 @@ class TemplateRenderer
                     }
                     $replace = [];
                     foreach ($usedVariables as $variable) {
-                        $replace[] = $this->lessVariableProvider->getCssRule($variable);
+                        $rule = $this->lessVariableProvider->getCssRule($variable);
+                        // Rule may have already been setup using .lib-css
+                        // This can happen if file is going to be delivered via
+                        // a module
+                        if (strpos($template, $rule) === false) {
+                            $replace[] = $rule;
+                        }
                     }
+
                     $replace  = implode("\n" . ($indents[$variablePrefix] ?? ''), $replace);
                 }
 
@@ -151,6 +137,10 @@ class TemplateRenderer
 
         // Add media query wrapper
         foreach ($renderedTemplates as $mediaQuery => $renderedTemplate) {
+            // This fixes indentation when added to a media query
+            // As we want everything intended by 4 spaces
+            $renderedTemplate = str_replace("\n", "\n    ", "\n" . trim($renderedTemplate)) . "\n";
+
             if ($mediaQuery === 'common') {
                 $renderedTemplates[$mediaQuery] = "& when (@media-common = true) {" . $renderedTemplate . "}";
             } else {
@@ -165,51 +155,7 @@ class TemplateRenderer
             }
         }
 
-
         $finalRenderedTemplate = implode("\n\n", $renderedTemplates);
         return $finalRenderedTemplate;
-    }
-
-    private function getTemplateTag(string $content)
-    {
-        $safety = 10;
-        $buffer = $content;
-        $length = 0;
-        $level = 0;
-        while ($buffer && $safety > 0) {
-            $opener = strpos($buffer, '{');
-            $closer = strpos($buffer, '}');
-            $neitherExist = $opener === false && $closer === false;
-            $bothExist = $opener !== false && $closer !== false;
-
-            if ($neitherExist) {
-                // Invalid syntax
-                return false;
-            }
-
-            if ($closer === false || ($bothExist && $opener < $closer)) {
-                $level++;
-                $length += $opener+1;
-                $buffer = substr($buffer, $opener+1);
-            } else {
-                $level--;
-                $length += $closer+1;
-                $buffer = substr($buffer, $closer+1);
-
-                if ($level === 0) {
-                    return substr($content, 0, $length);
-                }
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     *
-     */
-    private function getTemplateStartRegex(): string
-    {
-        return '/&\s{0,}when\s{0,}\(' . self::VARIABLE_NAME . '\s{0,}=\s{0,}true\)\s{0,}\{/U';
     }
 }
