@@ -5,6 +5,7 @@
 namespace FishPig\LessPro\Framework\View\Design\Theme\Less;
 
 use Magento\Framework\View\Design\ThemeInterface;
+use FishPig\LessPro\Framework\View\Design\Theme\Less\Compiler;
 
 class VariableProvider
 {
@@ -50,6 +51,19 @@ class VariableProvider
         $variables = [];
 
         foreach ($this->fileCollector->getFilesByTheme($theme) as $file) {
+
+            try {
+                $templateFilename = Compiler::getTemplateFilename($file->getFileName());
+
+                if (is_file($templateFilename)) {
+                    // This CSS file is a compiled file so we cannot use
+                    // its contents for variables because they may be outdated
+                    continue;
+                }
+            } catch (\Exception $e) {
+                // This file already is a template file so we can continue
+            }
+
             $variables = array_merge(
                 $variables,
                 $this->getByFilename($file->getFileName())

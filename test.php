@@ -16,6 +16,12 @@ $templateEngine = $objectManager->get(\FishPig\LessPro\Framework\View\Design\The
 $variableProvider = $objectManager->get(\FishPig\LessPro\Framework\View\Design\Theme\Less\VariableProvider::class);
 $variableProvider->testCssRuleGeneration();
 
+
+
+//echo $compiler->getTargetFilename($compiler::getOriginalFilename('app/code/FishPig/LayerPro/view/frontend/web/css/template.less/_module.template.less'));
+//exit;
+
+
 if (false) {
     echo $templateEngine->render(
         file_get_contents(

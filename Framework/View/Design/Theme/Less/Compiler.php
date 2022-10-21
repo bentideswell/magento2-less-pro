@@ -74,18 +74,12 @@ class Compiler
         }
     }
 
-
+    /**
+     *
+     */
     private function createFile(\Magento\Framework\View\File $template, string $content): void
     {
-        $targetFile = str_replace(
-            '/' . self::TEMPLATE_DIR . '/',
-            '/source/',
-            str_replace(
-                self::TEMPLATE_FILE_EXTENSION,
-                    '.less',
-                    $template->getFilename()
-            )
-        );
+        $targetFile = $this->getTargetFilename($template->getFilename());
 
         $targetDir = dirname($targetFile);
 
@@ -130,5 +124,60 @@ class Compiler
                 )
             );
         }
+    }
+
+    /**
+     *
+     */
+    public static function getTargetFilename(string $filename): string
+    {
+        if (!self::stringEndsWith($filename, self::TEMPLATE_FILE_EXTENSION)) {
+            throw new \RuntimeException(
+                sprintf(
+                    'Unable to convert "%s" to a target filename as it already is one.',
+                    $filename
+                )
+            );
+        }
+
+        $filename = str_replace('/' . self::TEMPLATE_DIR . '/', '/source/', $filename);
+        $filename = preg_replace('/' . preg_quote(self::TEMPLATE_FILE_EXTENSION, '/') . '$/', '.less', $filename);
+
+        return $filename;
+    }
+
+    /**
+     *
+     */
+    public static function getTemplateFilename(string $filename): string
+    {
+        if (self::stringEndsWith($filename, self::TEMPLATE_FILE_EXTENSION)) {
+            throw new \RuntimeException(
+                sprintf(
+                    'Unable to convert "%s" to it\'s original filename as it already appears to be the original',
+                    $filename
+                )
+            );
+        }
+
+        $filename = str_replace('/source/', '/' . self::TEMPLATE_DIR . '/', $filename);
+        $filename = preg_replace('/\.less$/', self::TEMPLATE_FILE_EXTENSION, $filename);
+        return $filename;
+    }
+
+    /**
+     *
+     */
+    private static $filenameConversionMap = [
+        '/source/' => '/' . self::TEMPLATE_DIR . '/',
+        '.less' => self::TEMPLATE_FILE_EXTENSION
+    ];
+
+    /**
+     *
+     */
+    private static function stringEndsWith(string $str, string $endsWith): bool
+    {
+        return strlen($str) >= strlen($endsWith) && substr($str, -strlen($endsWith)) === $endsWith;
     }
 }
