@@ -9,6 +9,11 @@ class MediaQueryPrefixProvider
     /**
      *
      */
+    private $prefixes = null;
+
+    /**
+     *
+     */
     public function __construct(
         array $prefixes = [
             'maxXS',

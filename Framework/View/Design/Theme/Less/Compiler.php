@@ -9,13 +9,41 @@ class Compiler
     /**
      *
      */
+    private $fileCollector = null;
+
+    /**
+     *
+     */
+    private $lessVariableProvider = null;
+
+    /**
+     *
+     */
+    private $mediaQueryPrefixProvider = null;
+
+    /**
+     *
+     */
+    private $templateEngine = null;
+
+    /**
+     *
+     */
+    private static $filenameConversionMap = [
+        '/source/' => '/' . self::TEMPLATE_DIR . '/',
+        '.less' => self::TEMPLATE_FILE_EXTENSION
+    ];
+
+    /**
+     *
+     */
     const TEMPLATE_FILE_EXTENSION = '.template.less';
     const TEMPLATE_DIR  = 'template.less';
 
     /**
      *
      */
-    const BRAND = '// Precompiled by FishPig_LessTemplates';
+    const BRAND = '// Precompiled by FishPig_LessPro';
 
     /**
      *
@@ -88,6 +116,7 @@ class Compiler
             $targetContents = file_get_contents($targetFile);
 
             if ($targetContents !== '' && strpos($targetContents, self::BRAND) === false) {
+                return;
                 throw new \RuntimeException(
                     sprintf(
                         'Precompilation template target file exists (%s) and does not appear to be created by us.',
@@ -164,14 +193,6 @@ class Compiler
         $filename = preg_replace('/\.less$/', self::TEMPLATE_FILE_EXTENSION, $filename);
         return $filename;
     }
-
-    /**
-     *
-     */
-    private static $filenameConversionMap = [
-        '/source/' => '/' . self::TEMPLATE_DIR . '/',
-        '.less' => self::TEMPLATE_FILE_EXTENSION
-    ];
 
     /**
      *

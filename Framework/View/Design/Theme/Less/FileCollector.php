@@ -13,6 +13,21 @@ class FileCollector
     /**
      *
      */
+    private $themeProvider = null;
+
+    /**
+     *
+     */
+    private $fileFactory = null;
+
+    /**
+     *
+     */
+    private $componentRegistrar = null;
+
+    /**
+     *
+     */
     private $cache = [];
 
     /**

@@ -12,6 +12,16 @@ class VariableProvider
     /**
      *
      */
+    private $fileCollector = null;
+
+    /**
+     *
+     */
+    private $mediaQueryPrefixProvider = null;
+
+    /**
+     *
+     */
     private $ignoreList = [
         '@import',
         '@magento_import',

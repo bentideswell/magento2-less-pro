@@ -9,6 +9,16 @@ class Engine
     /**
      *
      */
+    private $lessVariableProvider = null;
+
+    /**
+     *
+     */
+    private $mediaQueryPrefixProvider = null;
+
+    /**
+     *
+     */
     public function __construct(
         \FishPig\LessPro\Framework\View\Design\Theme\Less\VariableProvider $lessVariableProvider,
         \FishPig\LessPro\Framework\View\Design\Theme\Less\MediaQueryPrefixProvider $mediaQueryPrefixProvider
@@ -121,6 +131,9 @@ class Engine
                             $replace[] = $rule;
                         }
                     }
+
+                    // Fixes a bug that had duplicate rules
+                    $replace = array_values(array_unique($replace));
 
                     $replace  = implode("\n" . ($indents[$variablePrefix] ?? ''), $replace);
                 }

@@ -13,6 +13,11 @@ class RepositoryPlugin
     /**
      *
      */
+    private $compiler = null;
+
+    /**
+     *
+     */
     private $hasAlreadyRan = false;
 
     /**

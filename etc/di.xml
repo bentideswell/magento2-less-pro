@@ -3,4 +3,11 @@
     <type name="Magento\Framework\View\Asset\Repository">
         <plugin name="fishpig-lesspro" type="FishPig\LessPro\Plugin\Magento\Framework\View\Asset\RepositoryPlugin"/>
     </type>
+    <type name="Magento\Framework\Console\CommandList">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="fishpig-less-pro-compile" xsi:type="object">FishPig\LessPro\Console\Command\CompileFileCommand</item>
+            </argument>
+        </arguments>
+    </type>
 </config>
